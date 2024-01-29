@@ -58,11 +58,13 @@ The client CLI based application that can do these things"
   node ./build/index.js <your file path>
   ```
   This will return a file Id that we should store for checking status of the file.
+
 2. Check for results of a file that you submitted earlier. This can be done using the command:
   ```shell
   node ./build/index.js --check-result <fileId>
   ```
   If your file has been processed, this will print the result on the screen, otherwise it will let you know that the processing is not finished.
+
 3. One other option that the client provides you is to run your file locally. This provides you with the flexibility of getting results in an offline fashion but this does not upload results on to the server and thus the results are not persisted. you also have to use your system's resources. This can be done using following command:
   ```shell
   node ./build/index.js --local <your file path>
