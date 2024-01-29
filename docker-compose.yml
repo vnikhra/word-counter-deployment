@@ -5,46 +5,32 @@ services:
     image: postgres:latest
     restart: always
     ports:
-      - "15432:5432"  # Expose container port 5432 as port 15432 on the host
+      - "15432:5432"
     environment:
       POSTGRES_DB: word-counter
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./postgresql.conf:/etc/postgresql/postgresql.conf  # Mount custom postgresql.conf
+      - ./postgresql.conf:/etc/postgresql/postgresql.conf
     command: >
       postgres -c "config_file=/etc/postgresql/postgresql.conf"
 
-  activemq:
-    image: rmohr/activemq:latest
+  rabbitmq:
+    image: rabbitmq:management
     restart: always
     ports:
-      - "8161:8161"  # Web console
-      - "61616:61616" # OpenWire
-      - "61613:61613" # Stomp
-      - "1883:1883"   # MQTT
-      - "5672:5672"   # AMQP
-    volumes:
-      - activemq_data:/var/lib/activemq/data
-
-  init-db:
-    image: postgres:latest
-    depends_on:
-      - postgresql
-    entrypoint: ["/bin/bash", "-c"]
+      - "15672:15672"
+      - "5672:5672"
     environment:
-      PGPASSWORD: postgres
-    command: >
-      while ! pg_isready -h postgresql -p 5432 -q -U postgres; do sleep 1; done && \
-      psql -h postgresql -U postgres -d word-counter -c "CREATE USER \"word-counter\" WITH PASSWORD 'word-counter'; \
-      GRANT ALL PRIVILEGES ON DATABASE \"word-counter\" TO \"word-counter\";"
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
 
   pgadmin:
     image: dpage/pgadmin4:latest
     restart: always
     ports:
-      - "5050:80"  # Expose pgAdmin web interface on port 5050
+      - "5050:80"
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@example.com
       PGADMIN_DEFAULT_PASSWORD: admin
@@ -55,7 +41,7 @@ services:
     image: minio/minio:latest
     restart: always
     ports:
-      - "9000:9000"  # Expose MinIO web interface on port 9000
+      - "9000:9000"
       - "9001:9001"
     environment:
       MINIO_ROOT_USER: minioadmin
@@ -64,9 +50,15 @@ services:
       - minio_data:/data
     command: server --console-address ":9001" /data
 
+  api:
+    image: vibhor10097/word-counter-api:1.0.10
+    ports:
+      - "16666:16666"
+
+  worker:
+    image: vibhor10097/word-counter-worker:1.0.0
+
 volumes:
   postgres_data:
-  activemq_data:
   pgadmin_data:
   minio_data:
-
