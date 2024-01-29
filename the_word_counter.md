@@ -88,20 +88,30 @@ A simple high level diagram of the architecture is as follows:
 ![Architecture Diagram](architecture.png)
 
 ### How do the services interact:
-A typical file processing job will have the following steps:
-1. The user will execute the `client` using `node ./build/index.js <file path>`
-2. The `client` will call the `API` service at `GET /api/request-upload-url` to get a fileId and a signed url to upload the file on service's S3 bucket.
-3. The `API` service will create an entry for the file in DB and set the status to `requested`
-4. The `client` will then call the `API` service at `GET /api/enqueue-file` to let it know that the file is uploaded and it can now start processing the file.
-5. The `API` service will then queue a message with the fileId on an AMQ queue and set the file status to `initiated`.
-6. The `Worker` is watching the queue for any new messages. it will read the message put by the `API` service and set its status to `processing`
-7. The `Worker` will start processing the file.
-8. Once the `Worker` has got the result, it will create a file on the other S3 bucket with results and set the file status to `completed`.
-9. Meanwhile the user can use the`client` to check the status of file by using the command `node ./build/index.js --check-result <fileId>`
-10. The client will call the `API` service at `GET /api/generate-download-url?fileId=<fileId>`.
-11. When the `client` calls above API, if the result is not available, the `API` service will return a 403.
-12. In case the result is available, the `API` service will return a signed url for the result file.
-13. The `client` will then use the signed url to download the file and print it on screen.
+
+#### Flow for submitting file for remote execution
+When the user run the command : `node ./build/index.js <file path>`, following will happen:
+1. The `client` application will call the `API` service at `GET /api/request-upload-url` to get a fileId and a signed url to upload the file on service's S3 bucket.
+2. The `API` service will create an entry for the file in DB and set the status to `requested`
+3. The `client` application will then call the `API` service at `GET /api/enqueue-file` to let it know that the file is uploaded and it can now start processing the file.
+4. The `API` service will then queue a message with the fileId on an AMQ queue and set the file status to `initiated`.
+5. The `Worker` node is watching the queue for any new messages. it will read the message put by the `API` service and set its status to `processing`
+6. The `Worker` node will start processing the file.
+7. Once the `Worker` node has got the result, it will create a file on the other S3 bucket with results and set the file status to `completed`.
+
+### Flow for checking status for file that was submitted earlier
+When the user runs the command `node ./build/index.js --check-result <fileId>`, following will happen:
+1. The `client` application will call the `API` service at `GET /api/generate-download-url?fileId=<fileId>`.
+2. When the `client` calls above API, if the result is not available, the `API` service will return a 403.
+3. In this case, the `client` application will let the user know that file is still being processed.
+4. In case the result is available, the `API` service will return a signed url to download the result file.
+5. In this case, the `client` will then use the signed url to download the file and print it on screen for the user to see.
+
+### Flow for executing files locally
+When the user run the command : `node ./build/index.js --local <file path>`, following will happen:
+1. The `client` application will convert the file into a filestream and pass it on to the `countWords` function in `@vnikhra/word-counter` library.
+2. The `countWords` function will count the frequency of each word in the file and return it to the main application. 
+3. The `client` application will print the result on screen for the user to see it.
 
 ### Notes:
 1. There are 2 S3 buckets, 1 in which the client uploads files using the signed url provided by API server and the other in which the worker uploads the results.
