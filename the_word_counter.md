@@ -90,6 +90,7 @@ A simple high level diagram of the architecture is as follows:
 ### How do the services interact:
 
 #### Flow for submitting file for remote execution
+
 When the user run the command : `node ./build/index.js <file path>`, following will happen:
 1. The `client` application will call the `API` service at `GET /api/request-upload-url` to get a fileId and a signed url to upload the file on service's S3 bucket.
 2. The `API` service will create an entry for the file in DB and set the status to `requested`
@@ -99,7 +100,8 @@ When the user run the command : `node ./build/index.js <file path>`, following w
 6. The `Worker` node will start processing the file.
 7. Once the `Worker` node has got the result, it will create a file on the other S3 bucket with results and set the file status to `completed`.
 
-### Flow for checking status for file that was submitted earlier
+#### Flow for checking status for file that was submitted earlier
+
 When the user runs the command `node ./build/index.js --check-result <fileId>`, following will happen:
 1. The `client` application will call the `API` service at `GET /api/generate-download-url?fileId=<fileId>`.
 2. When the `client` calls above API, if the result is not available, the `API` service will return a 403.
@@ -107,7 +109,8 @@ When the user runs the command `node ./build/index.js --check-result <fileId>`, 
 4. In case the result is available, the `API` service will return a signed url to download the result file.
 5. In this case, the `client` will then use the signed url to download the file and print it on screen for the user to see.
 
-### Flow for executing files locally
+#### Flow for executing files locally
+
 When the user run the command : `node ./build/index.js --local <file path>`, following will happen:
 1. The `client` application will convert the file into a filestream and pass it on to the `countWords` function in `@vnikhra/word-counter` library.
 2. The `countWords` function will count the frequency of each word in the file and return it to the main application. 
